@@ -1,0 +1,7 @@
+CREATE TABLE NOTIFICATIONS_SETTINGS (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  recipient VARCHAR(255),
+  subject VARCHAR(255),
+  body TEXT,
+  due_date DATE
+);
