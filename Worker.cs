@@ -22,7 +22,9 @@ namespace worker_notification
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                if (DateTime.Now.Hour == 8 && DateTime.Now.Minute == 00)
+                DateTime dateTimeNow = DateTime.UtcNow.AddHours(-3);
+
+                if (dateTimeNow.Hour == 8 && dateTimeNow.Minute == 00)
                 {
                     SmtpConfiguration smtpConfiguration = new(_configuration.GetValue<string>("SmtpConfiguration:Server"), _configuration.GetValue<int>("SmtpConfiguration:Port"), _configuration.GetValue<string>("SmtpConfiguration:Username"), _configuration.GetValue<string>("SmtpConfiguration:AppPassword"));
 
@@ -37,10 +39,17 @@ namespace worker_notification
 
                     foreach (NotificationSettingMapper notification in notifications)
                     {
+                        decimal yearsLeft = (notification.DUE_DATE - dateTimeNow).Days / 365;
+                        decimal daysLeft = (notification.DUE_DATE - dateTimeNow).Days;
+                        decimal hoursLeft = (notification.DUE_DATE - dateTimeNow).Hours;
+
                         MailMessage message = new(smtpConfiguration.Username, notification.RECIPIENT)
                         {
-                            Subject = notification.SUBJECT,
-                            Body = notification.BODY + $"\r\n\r\nData final: {notification.DUE_DATE.ToString("dd/MM/yyyy")}"
+                            Subject = $"Worker Notification | {notification.SUBJECT}",
+                            Body = notification.BODY
+                            + $"\r\n\r\n--------------------------------------------------------------"
+                            + $"\r\n\r\nRestam: {yearsLeft} anos, {daysLeft} dias e {hoursLeft} horas."
+                            + $"\r\n\r\nData final: {notification.DUE_DATE.ToString("dd/MM/yyyy")}"
                         };
 
                         try
