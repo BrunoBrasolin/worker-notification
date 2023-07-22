@@ -1,17 +1,17 @@
 ﻿using Coravel.Invocable;
 using System.Net.Mail;
 using System.Net;
-using MySqlConnector;
 using Dapper;
+using Oracle.ManagedDataAccess.Client;
 
 namespace worker_notification;
 public class EmailNotification : IInvocable
 {
     private readonly ILogger<EmailNotification> _logger;
-    private readonly MySqlConnection _connection;
+    private readonly OracleConnection _connection;
     private readonly IConfiguration _configuration;
 
-    public EmailNotification(ILogger<EmailNotification> logger, MySqlConnection connection, IConfiguration configuration)
+    public EmailNotification(ILogger<EmailNotification> logger, OracleConnection connection, IConfiguration configuration)
     {
         _logger = logger;
         _connection = connection;
@@ -24,7 +24,7 @@ public class EmailNotification : IInvocable
 
         SmtpConfiguration smtpConfiguration = new(_configuration.GetValue<string>("SmtpConfiguration:Server"), _configuration.GetValue<int>("SmtpConfiguration:Port"), _configuration.GetValue<string>("SmtpConfiguration:Username"), _configuration.GetValue<string>("SmtpConfiguration:AppPassword"));
 
-        IEnumerable<NotificationSettingMapper> notifications = _connection.Query<NotificationSettingMapper>("SELECT * FROM NOTIFICATIONS_SETTINGS;");
+        IEnumerable<NotificationSettingMapper> notifications = _connection.Query<NotificationSettingMapper>("SELECT * FROM NOTIFICATIONS_SETTINGS");
 
         SmtpClient smtpClient = new(smtpConfiguration.Server, smtpConfiguration.Port)
         {
@@ -36,7 +36,7 @@ public class EmailNotification : IInvocable
         {
             if (dateTimeNow > notification.DUE_DATE)
             {
-                _connection.Execute("DELETE FROM NOTIFICATIONS_SETTINGS WHERE ID = @id", new { id = notification.ID });
+                _connection.Execute("DELETE FROM NOTIFICATIONS_SETTINGS WHERE ID = :id", new { id = notification.ID });
 
                 continue;
             }
