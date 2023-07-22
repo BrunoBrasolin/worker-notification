@@ -15,4 +15,4 @@
 - Publish: [Oracle Free Compute Instances](https://docs.oracle.com/en-us/iaas/Content/FreeTier/freetier_topic-Always_Free_Resources.htm)
 - Image: [Docker](https://hub.docker.com/repository/docker/brunobrasolin/worker-notification)
 - Repository: [GitHub](https://github.com/BrunoBrasolin/worker-notification)
-- Database: [Heroku JawsDB MySQL](https://elements.heroku.com/addons/jawsdb)
+- Database: [Oracle Autonomous Transaction Processing](https://www.oracle.com/br/autonomous-database/autonomous-transaction-processing/)
