@@ -1,36 +1,28 @@
 ﻿using Coravel.Invocable;
-using System.Net.Mail;
-using System.Net;
 using Dapper;
 using Oracle.ManagedDataAccess.Client;
+using Gamidas.Utils.RabbitMQ.Model;
+using Gamidas.Utils.RabbitMQ.Send;
 
 namespace worker_notification;
 public class EmailNotification : IInvocable
 {
     private readonly ILogger<EmailNotification> _logger;
     private readonly OracleConnection _connection;
-    private readonly IConfiguration _configuration;
+    private readonly ISendEvent _sendEvent;
 
-    public EmailNotification(ILogger<EmailNotification> logger, OracleConnection connection, IConfiguration configuration)
+    public EmailNotification(ILogger<EmailNotification> logger, OracleConnection connection, ISendEvent sendEvent)
     {
         _logger = logger;
         _connection = connection;
-        _configuration = configuration;
+        _sendEvent = sendEvent;
     }
 
     public Task Invoke()
     {
         DateTime dateTimeNow = DateTime.UtcNow.AddHours(-3);
 
-        SmtpConfiguration smtpConfiguration = new(_configuration.GetValue<string>("SmtpConfiguration:Server"), _configuration.GetValue<int>("SmtpConfiguration:Port"), _configuration.GetValue<string>("SmtpConfiguration:Username"), _configuration.GetValue<string>("SmtpConfiguration:AppPassword"));
-
         IEnumerable<NotificationSettingMapper> notifications = _connection.Query<NotificationSettingMapper>("SELECT * FROM NOTIFICATIONS_SETTINGS");
-
-        SmtpClient smtpClient = new(smtpConfiguration.Server, smtpConfiguration.Port)
-        {
-            EnableSsl = true,
-            Credentials = new NetworkCredential(smtpConfiguration.Username, smtpConfiguration.AppPassword)
-        };
 
         foreach (NotificationSettingMapper notification in notifications)
         {
@@ -45,20 +37,18 @@ public class EmailNotification : IInvocable
             decimal daysLeft = (notification.DUE_DATE - dateTimeNow).Days;
             decimal hoursLeft = (notification.DUE_DATE - dateTimeNow).Hours;
 
-            MailMessage message = new(smtpConfiguration.Username, notification.RECIPIENT)
-            {
-                Subject = $"Worker Notification | {notification.SUBJECT}",
-                Body = notification.BODY
+            string subject = $"Worker Notification | {notification.SUBJECT}";
+            string body = notification.BODY
                 + $"\r\n\r\n--------------------------------------------------------------"
                 + $"\r\n\r\nRestam: {yearsLeft} anos, {daysLeft} dias e {hoursLeft} horas."
-                + $"\r\n\r\nData final: {notification.DUE_DATE:dd/MM/yyyy}"
-            };
+                + $"\r\n\r\nData final: {notification.DUE_DATE:dd/MM/yyyy}";
+
+            EmailModel email = new(notification.RECIPIENT, body, subject);
 
             try
             {
-                smtpClient.Send(message);
-
-                _logger.LogInformation($"Email {notification.ID} sent successfully.");
+                _sendEvent.SendEmail(email);
+                _logger.LogInformation($"Email {notification.ID} send successfully.");
             }
             catch (Exception ex)
             {
@@ -67,22 +57,6 @@ public class EmailNotification : IInvocable
         }
 
         return Task.CompletedTask;
-    }
-
-    class SmtpConfiguration
-    {
-        public string Server;
-        public int Port;
-        public string Username;
-        public string AppPassword;
-
-        public SmtpConfiguration(string server, int port, string username, string appPassword)
-        {
-            this.Server = server;
-            this.Port = port;
-            this.Username = username;
-            this.AppPassword = appPassword;
-        }
     }
 
     class NotificationSettingMapper

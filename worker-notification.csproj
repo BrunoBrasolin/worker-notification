@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net7.0</TargetFramework>
-    <Nullable>enable</Nullable>
+    <Nullable>disable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>dotnet-worker_notification-76765ec8-8ee4-4785-aee9-9ca2070bd3c1</UserSecretsId>
     <RootNamespace>worker_notification</RootNamespace>
@@ -13,6 +13,7 @@
   <ItemGroup>
     <PackageReference Include="Coravel" Version="4.2.1" />
     <PackageReference Include="Dapper" Version="2.0.143" />
+    <PackageReference Include="Gamidas.Utils" Version="0.0.0-alpha.0.8" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.1" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.18.1" />
     <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="3.21.100" />
