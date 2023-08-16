@@ -24,11 +24,17 @@ public class EmailNotification : IInvocable
 
         IEnumerable<NotificationSettingMapper> notifications = _connection.Query<NotificationSettingMapper>("SELECT * FROM NOTIFICATIONS_SETTINGS");
 
+        _logger.LogInformation($"Found {notifications.Count()} e-mails to send.");
+
         foreach (NotificationSettingMapper notification in notifications)
         {
+            _logger.LogInformation($"Starting {notification.ID}.");
+
             if (dateTimeNow > notification.DUE_DATE)
             {
                 _connection.Execute("DELETE FROM NOTIFICATIONS_SETTINGS WHERE ID = :id", new { id = notification.ID });
+
+                _logger.LogInformation($"Notification {notification.ID} deleted successfully.");
 
                 continue;
             }
@@ -45,14 +51,16 @@ public class EmailNotification : IInvocable
 
             EmailModel email = new(notification.RECIPIENT, body, subject);
 
+            _logger.LogInformation($"Email model created: {email}.");
+
             try
             {
                 _sendEvent.SendEmail(email);
-                _logger.LogInformation($"Email {notification.ID} send successfully.");
+                _logger.LogInformation($"E-mail {notification.ID} published successfully.");
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error while sending email: {ex.Message}");
+                _logger.LogError($"Error while publishing email: {ex.Message}");
             }
         }
 
