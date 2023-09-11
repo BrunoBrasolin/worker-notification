@@ -39,6 +39,12 @@ public class EmailNotification : IInvocable
                 continue;
             }
 
+            if ((notification.DUE_DATE - dateTimeNow).TotalDays < 30)
+            {
+                _logger.LogInformation($"Notification {notification.ID} does not passed the validation.");
+                continue;
+            }
+
             decimal yearsLeft = (notification.DUE_DATE - dateTimeNow).Days / 365;
             decimal daysLeft = (notification.DUE_DATE - dateTimeNow).Days;
             decimal hoursLeft = (notification.DUE_DATE - dateTimeNow).Hours;
@@ -51,7 +57,7 @@ public class EmailNotification : IInvocable
 
             EmailModel email = new(notification.RECIPIENT, body, subject);
 
-            _logger.LogInformation($"Email model created: {email}.");
+            _logger.LogInformation($"Email model created: {subject}.");
 
             try
             {
