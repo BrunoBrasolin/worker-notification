@@ -39,7 +39,7 @@ public class EmailNotification : IInvocable
                 continue;
             }
 
-            if ((notification.DUE_DATE - dateTimeNow).TotalDays < 30)
+            if ((notification.DUE_DATE - dateTimeNow).TotalDays > 30)
             {
                 _logger.LogInformation($"Notification {notification.ID} does not passed the validation.");
                 continue;
