@@ -1,4 +1,4 @@
-name: Docker Image CI
+name: GitHub Workflow
 
 on:
   push:
@@ -7,10 +7,19 @@ on:
       - '**/README.md'
   pull_request:
     branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
-  nuget-workflow:
-    uses: BrunoBrasolin/workflow-template/.github/workflows/docker-image.yml@main
+  CI:
+    uses: BrunoBrasolin/workflow-template/.github/workflows/net-docker-ci.yml@main
     with:
       image: brunobrasolin/worker-notification
+    secrets: inherit
+  
+  CD:
+    needs: CI
+    uses: BrunoBrasolin/workflow-template/.github/workflows/net-docker-cd.yml@main
+    with:
+      dockerAccount: brunobrasolin
+      applicationName: worker-notification
     secrets: inherit
