@@ -24,30 +24,31 @@ public class EmailNotification : IInvocable
 
         IEnumerable<NotificationSettingMapper> notifications = _connection.Query<NotificationSettingMapper>("SELECT * FROM NOTIFICATIONS_SETTINGS");
 
-        _logger.LogInformation($"Found {notifications.Count()} e-mails to send.");
+        _logger.LogInformation("Found {Count} e-mails to send.", notifications.Count());
 
         foreach (NotificationSettingMapper notification in notifications)
         {
-            _logger.LogInformation($"Starting {notification.ID}.");
+            _logger.LogInformation("Starting {NotificationId}.", notification.ID);
 
             if (dateTimeNow > notification.DUE_DATE)
             {
                 _connection.Execute("DELETE FROM NOTIFICATIONS_SETTINGS WHERE ID = :id", new { id = notification.ID });
 
-                _logger.LogInformation($"Notification {notification.ID} deleted successfully.");
+                _logger.LogInformation("Notification {NotificationId} deleted successfully.", notification.ID);
 
                 continue;
             }
 
-            if ((notification.DUE_DATE - dateTimeNow).TotalDays > 30)
+            TimeSpan timeSpan = notification.DUE_DATE - dateTimeNow;
+            if (timeSpan.TotalDays > 30)
             {
-                _logger.LogInformation($"Notification {notification.ID} does not passed the validation.");
+                _logger.LogInformation("Notification {NotificationId} does not passed the validation.", notification.ID);
                 continue;
             }
 
-            decimal yearsLeft = (notification.DUE_DATE - dateTimeNow).Days / 365;
-            decimal daysLeft = (notification.DUE_DATE - dateTimeNow).Days;
-            decimal hoursLeft = (notification.DUE_DATE - dateTimeNow).Hours;
+            decimal yearsLeft = (decimal)timeSpan.Days / 365;
+            decimal daysLeft = timeSpan.Days;
+            decimal hoursLeft = timeSpan.Hours;
 
             string subject = $"Worker Notification | {notification.SUBJECT}";
             string body = notification.BODY
@@ -57,16 +58,16 @@ public class EmailNotification : IInvocable
 
             EmailModel email = new(notification.RECIPIENT, body, subject);
 
-            _logger.LogInformation($"Email model created: {subject}.");
+            _logger.LogInformation("Email model created: {Subject}.", subject);
 
             try
             {
                 _sendEvent.SendEmail(email);
-                _logger.LogInformation($"E-mail {notification.ID} published successfully.");
+                _logger.LogInformation("E-mail {NotificationId} published successfully.", notification.ID);
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error while publishing email: {ex.Message}");
+                _logger.LogError(ex, "Error while publishing email: {ExceptionMessage}", ex.Message);
             }
         }
 
@@ -75,10 +76,10 @@ public class EmailNotification : IInvocable
 
     class NotificationSettingMapper
     {
-        public int ID { get; set; }
-        public string RECIPIENT { get; set; }
-        public string SUBJECT { get; set; }
-        public string BODY { get; set; }
-        public DateTime DUE_DATE { get; set; }
+        public int ID { get; } = 0;
+        public string RECIPIENT { get; } = string.Empty;
+        public string SUBJECT { get; } = string.Empty;
+        public string BODY { get; } = string.Empty;
+        public DateTime DUE_DATE { get; } = DateTime.MinValue;
     }
 }
