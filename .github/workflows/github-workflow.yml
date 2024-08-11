@@ -13,7 +13,7 @@ jobs:
   CI:
     uses: BrunoBrasolin/workflow-template/.github/workflows/net-docker-ci.yml@main
     with:
-      image: brunobrasolin/worker-notification
+      applicationName: worker-notification
     secrets: inherit
   
   CD:
