@@ -18,7 +18,7 @@ jobs:
   
   CD:
     needs: CI
-    uses: BrunoBrasolin/workflow-template/.github/workflows/net-docker-cd.yml@main
+    uses: BrunoBrasolin/workflow-template/.github/workflows/docker-cd.yml@main
     with:
       dockerAccount: brunobrasolin
       applicationName: worker-notification
